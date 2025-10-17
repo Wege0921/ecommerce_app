@@ -1,0 +1,126 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+
+# Flutter/Dart/Pub
+.dart_tool/
+.packages
+build/
+pubspec.lock
+
+# Flutter generated files
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-versions
+
+# IDE and editor settings
+.idea/
+.vscode/
+*.iml
+
+# Android
+android/.gradle/
+android/local.properties
+android/app/key.jks
+android/key.properties
+*.keystore
+*.jks
+
+# iOS
+ios/Flutter/.last_build_id
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/.symlinks/
+ios/Pods/
+ios/build/
+ios/Runner.xcworkspace/
+ios/Runner.xcodeproj/project.xcworkspace/
+ios/Runner.xcodeproj/xcuserdata/
+
+# Xcode
+*.xcuserstate
+*.xcworkspace
+DerivedData/
+*.xccheckout
+*.xcuserdatad
+
+# Web
+web/.dart_tool/
+web/build/
+
+# Windows
+windows/.dart_tool/
+windows/build/
+windows/Runner/GeneratedPlugins.cmake
+
+# macOS
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral/
+macos/build/
+
+# Linux
+linux/.dart_tool/
+linux/build/
+linux/flutter/
+linux/CMakeFiles/
+
+# Other build outputs
+*.log
+*.lock
+*.tmp
+*.swp
+*.DS_Store
+
+# Firebase / Google Services keys (keep these private)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# Environment files
+.env
+.env.*
