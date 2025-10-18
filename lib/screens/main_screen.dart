@@ -7,14 +7,15 @@ import 'login_screen.dart';
 import '../services/auth_service.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final int initialIndex;
+  const MainScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   final AuthService _authService = AuthService();
 
   // Screens should return only the body (no Scaffold)
@@ -24,6 +25,12 @@ class _MainScreenState extends State<MainScreen> {
     CartScreen(),       // just the body
     ProfileScreen(),    // just the body
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
   Future<void> _onTabTapped(int index) async {
     if (index == 2 || index == 3) {

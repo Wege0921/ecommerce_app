@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'products_screen.dart';
+import '../services/category_service.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -13,6 +12,7 @@ class CategoriesScreen extends StatefulWidget {
 class _CategoriesScreenState extends State<CategoriesScreen> {
   List categories = [];
   bool isLoading = true;
+  final _service = CategoryService();
 
   @override
   void initState() {
@@ -21,24 +21,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   Future<void> fetchCategories() async {
-    final url = Uri.parse("http://192.168.8.143:8000/api/categories/");
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
+    try {
+      final data = await _service.listCategories();
       setState(() {
-        if (data is Map && data.containsKey('results')) {
-          categories = data['results'];
-        } else if (data is List) {
-          categories = data;
-        } else {
-          categories = [];
-        }
+        categories = data;
         isLoading = false;
       });
-    } else {
+    } catch (e) {
       setState(() => isLoading = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load categories: $e')),
+      );
     }
   }
 

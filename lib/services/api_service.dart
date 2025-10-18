@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../config/api_config.dart';
 
 class ApiService {
-  final String baseUrl = "http://192.168.8.143:8000/api/auth/"; // change to your backend URL
+  final String baseUrl = ApiConfig.baseUrl; // e.g., http://host:8000/api/
   final storage = const FlutterSecureStorage();
 
   Future<String?> getToken() async {

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'register_screen.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,7 +10,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final storage = const FlutterSecureStorage();
+  final _auth = AuthService();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
@@ -28,41 +26,29 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Validate Ethiopian phone formats: 09xxxxxxxx or 07xxxxxxxx, also allow +2519/7...
+    final reg = RegExp(r'^(\+?251(9|7)\d{8}|0(9|7)\d{8})$');
+    if (!reg.hasMatch(username)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid Ethio Telecom (09...) or Safaricom (07...) phone number.')),
+      );
+      return;
+    }
+
     setState(() => isLoading = true);
 
     try {
-      final url = Uri.parse("http://192.168.8.143:8000/api/auth/token/");
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"username": username, "password": password}),
-      );
-
+      final ok = await _auth.login(username, password);
       setState(() => isLoading = false);
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        // ✅ Save tokens securely
-        await storage.write(key: 'access_token', value: data['access']);
-        await storage.write(key: 'refresh_token', value: data['refresh']);
-
-        // ✅ Return to previous screen with success result
-        if (mounted) {
-          Navigator.pop(context, true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Login successful!")),
-          );
-        }
-      } else {
-        String message = 'Login failed. Please check your credentials.';
-        try {
-          final error = jsonDecode(response.body);
-          message = error['detail'] ?? message;
-        } catch (_) {}
-
+      if (ok && mounted) {
+        Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
+          const SnackBar(content: Text("Login successful!")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login failed. Please check your credentials.')),
         );
       }
     } catch (e) {
@@ -82,41 +68,49 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Center(
           child: SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const Text(
+                  'Welcome back',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                  textAlign: TextAlign.left,
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: usernameController,
-                  decoration: const InputDecoration(labelText: "Username"),
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: "Phone Number",
+                    hintText: "e.g. 09xxxxxxxx",
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 TextField(
                   controller: passwordController,
                   obscureText: true,
-                  decoration: const InputDecoration(labelText: "Password"),
+                  decoration: const InputDecoration(
+                    labelText: "Password",
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 isLoading
-                    ? const CircularProgressIndicator()
+                    ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
                         onPressed: loginUser,
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(45),
-                        ),
+                        style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
                         child: const Text("Login"),
                       ),
-                const SizedBox(height: 15),
-                TextButton(
+                const SizedBox(height: 12),
+                OutlinedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (_) => const RegisterScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
                     );
                   },
-                  child: const Text(
-                    "Don’t have an account? Register",
-                    style: TextStyle(color: Colors.blue),
-                  ),
+                  child: const Text("Don’t have an account? Register"),
                 ),
               ],
             ),

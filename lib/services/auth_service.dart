@@ -1,27 +1,26 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../config/api_config.dart';
 
 class AuthService {
-  final String baseUrl = "http://192.168.8.143:8000/api/auth/";
+  final String baseUrl = ApiConfig.baseUrl + ApiConfig.auth;
+  final storage = const FlutterSecureStorage();
 
   /// 🔑 Save tokens locally
   Future<void> _saveTokens(String access, String refresh) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('access_token', access);
-    await prefs.setString('refresh_token', refresh);
+    await storage.write(key: 'access_token', value: access);
+    await storage.write(key: 'refresh_token', value: refresh);
   }
 
   /// 🧾 Get access token
   Future<String?> getAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('access_token');
+    return storage.read(key: 'access_token');
   }
 
   /// 🧾 Get refresh token
   Future<String?> getRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('refresh_token');
+    return storage.read(key: 'refresh_token');
   }
 
   /// ✅ Check if user is logged in
@@ -82,7 +81,7 @@ class AuthService {
 
   /// 🚪 Logout user
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await storage.delete(key: 'access_token');
+    await storage.delete(key: 'refresh_token');
   }
 }
