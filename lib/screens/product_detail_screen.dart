@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/order_service.dart';
+import '../utils/format.dart';
+import 'package:ecommerce_app/l10n/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../state/cart_state.dart';
 import '../services/auth_service.dart';
@@ -58,8 +60,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Price: \$${product['price']}",
-                    style: const TextStyle(fontSize: 20, color: Colors.green),
+                    '${AppLocalizations.of(context)!.price}: ' + Format.price(context, Format.toNum(product['price'])),
+                    style: TextStyle(fontSize: 20, color: Theme.of(context).colorScheme.primary),
                   ),
                   if (stock != null) ...[
                     const SizedBox(height: 8),
@@ -68,7 +70,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Text('Quantity:'),
+                      Text(AppLocalizations.of(context)!.quantity + ':'),
                       const SizedBox(width: 12),
                       IconButton(
                         icon: const Icon(Icons.remove_circle_outline),
@@ -95,12 +97,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Expanded(
                         child: OutlinedButton.icon(
                           icon: const Icon(Icons.add_shopping_cart),
-                          label: const Text('Add to Cart'),
+                          label: Text(AppLocalizations.of(context)!.addToCart),
                           onPressed: () {
                             final cart = context.read<CartState>();
                             cart.add(product, quantity: quantity, stock: stock);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Added to cart')),
+                              SnackBar(content: Text(AppLocalizations.of(context)!.addToCart)),
                             );
                           },
                         ),
@@ -109,7 +111,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Expanded(
                         child: ElevatedButton.icon(
                           icon: const Icon(Icons.shopping_cart_checkout),
-                          label: const Text('Buy Now'),
+                          label: Text(AppLocalizations.of(context)!.buyNow),
                           onPressed: () async {
                             final token = await AuthService().getAccessToken();
                             if (token == null) {

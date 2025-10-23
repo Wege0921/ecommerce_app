@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../state/cart_state.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
 import 'orders_screen.dart';
@@ -50,6 +52,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> logout() async {
     await AuthService().logout();
+    if (mounted) {
+      context.read<CartState>().clear();
+    }
     setState(() {
       user = null;
       isLoggedIn = false;

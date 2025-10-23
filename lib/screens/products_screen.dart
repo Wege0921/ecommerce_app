@@ -3,6 +3,8 @@ import 'product_detail_screen.dart';
 import '../services/product_service.dart';
 import '../config/api_config.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../utils/format.dart';
+import 'package:ecommerce_app/l10n/generated/app_localizations.dart';
 
 class ProductsScreen extends StatefulWidget {
   final int? categoryId; // optional filter by category
@@ -19,6 +21,26 @@ class _ProductsScreenState extends State<ProductsScreen> {
   int _page = 1;
   bool isLoadingMore = false;
   bool hasMore = true;
+  // type filter (e.g., cap types)
+  Set<String> _types = {};
+  String? _activeType;
+
+  String? _typeOf(Map<String, dynamic> p) {
+    final dynamic t1 = p['type'];
+    if (t1 is String && t1.trim().isNotEmpty) return t1.trim();
+    final dynamic t2 = p['sub_category'] ?? p['subcategory'] ?? p['subtype'];
+    if (t2 is String && t2.trim().isNotEmpty) return t2.trim();
+    if (p['attributes'] is Map<String, dynamic>) {
+      final attrs = p['attributes'] as Map<String, dynamic>;
+      final dynamic t3 = attrs['type'] ?? attrs['subtype'];
+      if (t3 is String && t3.trim().isNotEmpty) return t3.trim();
+    }
+    if (p['tags'] is List) {
+      final tags = (p['tags'] as List).whereType<String>().map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      if (tags.isNotEmpty) return tags.first;
+    }
+    return null;
+  }
 
   @override
   void initState() {
@@ -31,6 +53,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       final page = reset ? 1 : (_page + 1);
       final data = await _service.listProducts(
         categoryId: widget.categoryId,
+        type: _activeType,
         inStock: true,
         ordering: '-created_at',
         page: page,
@@ -48,6 +71,15 @@ class _ProductsScreenState extends State<ProductsScreen> {
         hasMore = data['next'] != null && pageItems.isNotEmpty;
         isLoading = false;
         isLoadingMore = false;
+        // build type facets
+        final types = <String>{};
+        for (final it in products) {
+          if (it is Map<String, dynamic>) {
+            final t = _typeOf(it);
+            if (t != null && t.isNotEmpty) types.add(t);
+          }
+        }
+        _types = types;
       });
     } catch (e) {
       setState(() {
@@ -64,7 +96,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Products")),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.productsTitle)),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -86,6 +118,53 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 },
                 child: ListView(
                   children: [
+                    if (_types.isNotEmpty)
+                      SizedBox(
+                        height: 48,
+                        child: ListView(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: ChoiceChip(
+                                label: const Text('All'),
+                                selected: _activeType == null,
+                                onSelected: (_) {
+                                  if (_activeType != null) {
+                                    setState(() {
+                                      _activeType = null;
+                                      isLoading = true;
+                                      isLoadingMore = false;
+                                      hasMore = true;
+                                    });
+                                    fetchProducts(reset: true);
+                                  }
+                                },
+                              ),
+                            ),
+                            for (final t in _types)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: ChoiceChip(
+                                  label: Text(t),
+                                  selected: _activeType == t,
+                                  onSelected: (_) {
+                                    if (_activeType != t) {
+                                      setState(() {
+                                        _activeType = t;
+                                        isLoading = true;
+                                        isLoadingMore = false;
+                                        hasMore = true;
+                                      });
+                                      fetchProducts(reset: true);
+                                    }
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     GridView.builder(
                       padding: const EdgeInsets.all(12),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -100,6 +179,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       itemBuilder: (context, index) {
                         final p = products[index] as Map<String, dynamic>;
                         final imageUrl = (p['image_url'] ?? '') as String;
+                        // Coerce price to numeric even if backend returns it as String
+                        final dynamic priceRaw = p['price'];
+                        num priceNum;
+                        if (priceRaw is num) {
+                          priceNum = priceRaw;
+                        } else if (priceRaw is String) {
+                          priceNum = num.tryParse(priceRaw) ?? 0;
+                        } else {
+                          priceNum = 0;
+                        }
                         return InkWell(
                           onTap: () => Navigator.push(
                             context,
@@ -138,8 +227,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        '\$${p['price']}',
-                                        style: const TextStyle(color: Colors.green),
+                                        Format.price(context, priceNum, currency: 'ETB'),
+                                        style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w600),
                                       ),
                                     ],
                                   ),

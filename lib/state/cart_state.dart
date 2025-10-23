@@ -15,7 +15,16 @@ class CartItem {
     return 0;
   }
   num get total => unitPrice * quantity;
-  int get productId => product['id'] as int;
+  int get productId {
+    final raw = product['id'];
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    if (raw is String) {
+      final n = int.tryParse(raw);
+      if (n != null) return n;
+    }
+    return product.hashCode; // fallback to avoid crashes; should not happen in normal flow
+  }
 }
 
 class CartState extends ChangeNotifier {
@@ -30,11 +39,19 @@ class CartState extends ChangeNotifier {
   List<CartItem> get items => _items.values.toList();
   bool get isEmpty => _items.isEmpty;
   int get count => _items.length;
+  int get totalItems => _items.values.fold<int>(0, (sum, it) => sum + it.quantity);
 
   num get subtotal => _items.values.fold<num>(0, (sum, it) => sum + it.total);
 
   void add(Map<String, dynamic> product, {int quantity = 1, int? stock}) {
-    final id = product['id'] as int;
+    final dynamic raw = product['id'];
+    final int id = raw is int
+        ? raw
+        : raw is num
+            ? raw.toInt()
+            : raw is String
+                ? (int.tryParse(raw) ?? product.hashCode)
+                : product.hashCode;
     final current = _items[id];
     int newQty = (current?.quantity ?? 0) + quantity;
     if (stock != null) newQty = newQty.clamp(1, stock);
@@ -54,6 +71,7 @@ class CartState extends ChangeNotifier {
       it.quantity = q;
     }
     notifyListeners();
+    _persist();
   }
 
   void increment(int productId, {int? stock}) {
@@ -71,6 +89,7 @@ class CartState extends ChangeNotifier {
   void remove(int productId) {
     _items.remove(productId);
     notifyListeners();
+    _persist();
   }
 
   void clear() {
@@ -103,7 +122,14 @@ class CartState extends ChangeNotifier {
         final map = it as Map<String, dynamic>;
         final product = Map<String, dynamic>.from(map['product'] as Map);
         final qty = (map['quantity'] as num).toInt();
-        final id = product['id'] as int;
+        final dynamic raw = product['id'];
+        final int id = raw is int
+            ? raw
+            : raw is num
+                ? raw.toInt()
+                : raw is String
+                    ? (int.tryParse(raw) ?? product.hashCode)
+                    : product.hashCode;
         _items[id] = CartItem(product: product, quantity: qty);
       }
       notifyListeners();

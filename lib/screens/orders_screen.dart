@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/order_service.dart';
+import 'order_detail_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../utils/format.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -64,7 +67,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       final o = orders[index];
                       final items = (o['items'] as List? ?? const []);
                       final status = (o['status'] ?? 'PENDING').toString();
-                      final created = (o['created_at'] ?? '').toString();
+                      final createdRaw = (o['created_at'] ?? '').toString();
+                      DateTime? createdDt;
+                      try {
+                        createdDt = DateTime.tryParse(createdRaw);
+                      } catch (_) {}
+                      final created = createdDt != null ? Format.dateShort(context, createdDt) : createdRaw;
                       return Card(
                         margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         child: Padding(
@@ -84,6 +92,28 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 ],
                               ),
                               const SizedBox(height: 8),
+                              if ((o['payment_proof_url'] ?? '').toString().isNotEmpty)
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => OrderDetailScreen(order: o),
+                                      ),
+                                    );
+                                  },
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: CachedNetworkImage(
+                                      imageUrl: o['payment_proof_url'],
+                                      height: 80,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              if ((o['payment_proof_url'] ?? '').toString().isNotEmpty)
+                                const SizedBox(height: 8),
                               ...items.take(3).map((it) {
                                 final p = (it['product'] ?? {}) as Map<String, dynamic>;
                                 return Row(
@@ -104,6 +134,21 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 Text('+${items.length - 3} more items', style: const TextStyle(color: Colors.grey)),
                               const SizedBox(height: 8),
                               Text(created, style: const TextStyle(color: Colors.grey)),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => OrderDetailScreen(order: o),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('View Details'),
+                                ),
+                              ),
                             ],
                           ),
                         ),

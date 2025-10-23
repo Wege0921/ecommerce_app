@@ -6,6 +6,8 @@ import '../services/auth_service.dart';
 import 'login_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import '../utils/format.dart';
+import 'package:ecommerce_app/l10n/generated/app_localizations.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -54,43 +56,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cart = context.watch<CartState>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Checkout')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.checkoutTitle)),
       body: cart.isEmpty
-          ? const Center(child: Text('Your cart is empty'))
+          ? Center(child: Text(AppLocalizations.of(context)!.cartEmpty))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Shipping Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  Text(AppLocalizations.of(context)!.shippingDetails, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   Form(
                     key: _formKey,
                     child: Column(
                       children: [
                         TextFormField(
-                          controller: _nameCtrl,
-                          decoration: const InputDecoration(labelText: 'Full Name'),
-                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                        ),
-                        TextFormField(
                           controller: _phoneCtrl,
-                          decoration: const InputDecoration(labelText: 'Phone Number'),
-                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.phoneNumber),
+                          validator: (v) => (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.requiredField : null,
                           keyboardType: TextInputType.phone,
                         ),
                         TextFormField(
                           controller: _addressCtrl,
-                          decoration: const InputDecoration(labelText: 'Delivery Address'),
-                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                          minLines: 2,
-                          maxLines: 2,
+                          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.deliveryAddress),
+                          validator: (v) => (v == null || v.trim().isEmpty) ? AppLocalizations.of(context)!.requiredField : null,
+                          minLines: 1,
+                          maxLines: 1,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('Payment Instructions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 10),
+                  Text(AppLocalizations.of(context)!.paymentInstructions, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
@@ -99,14 +96,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       color: Color(0xFFF6F8FA),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Please pay half of the total to one of the accounts below and upload a screenshot of your payment.'),
-                        SizedBox(height: 8),
-                        Text('CBE: 1000023454545'),
-                        Text('Tele birr: 0940706072'),
-                        Text('Abyssinia Bank: 45673400'),
+                        Text(AppLocalizations.of(context)!.paymentInstructionLine),
+                        const SizedBox(height: 8),
+                        Text(AppLocalizations.of(context)!.telebirr),
+              
                       ],
                     ),
                   ),
@@ -114,7 +110,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Payment Method', style: TextStyle(fontWeight: FontWeight.w600)),
+                      Text(AppLocalizations.of(context)!.paymentMethod, style: const TextStyle(fontWeight: FontWeight.w600)),
                       Row(
                         children: [
                           Radio<String>(
@@ -122,7 +118,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             groupValue: _paymentMethod,
                             onChanged: (v) => setState(() => _paymentMethod = v!),
                           ),
-                          const Text('Bank Transfer (upload screenshot)'),
+                          Text(AppLocalizations.of(context)!.bankTransfer),
                         ],
                       ),
                       Row(
@@ -132,7 +128,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             groupValue: _paymentMethod,
                             onChanged: (v) => setState(() => _paymentMethod = v!),
                           ),
-                          const Text('Cash on delivery'),
+                          Text(AppLocalizations.of(context)!.cashOnDelivery),
                         ],
                       ),
                       if (_paymentMethod == 'BANK_TRANSFER')
@@ -148,7 +144,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   }
                                 },
                                 icon: const Icon(Icons.attach_file),
-                                label: Text(_paymentProof == null ? 'Upload Payment Screenshot' : 'Change Screenshot'),
+                                label: Text(_paymentProof == null
+                                    ? AppLocalizations.of(context)!.uploadPaymentScreenshot
+                                    : AppLocalizations.of(context)!.changeScreenshot),
                               ),
                             ),
                           ],
@@ -156,20 +154,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text('Order Summary', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  Text(AppLocalizations.of(context)!.orderSummary, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   ...cart.items.map((it) => ListTile(
                         dense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 0),
                         title: Text(it.product['title'] ?? ''),
-                        trailing: Text('${it.quantity} x \$${it.unitPrice}'),
+                        trailing: Text(
+                          '${it.quantity} x ' + Format.price(context, it.unitPrice),
+                          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                        ),
                       )),
                   const Divider(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Subtotal', style: TextStyle(fontWeight: FontWeight.w600)),
-                      Text('\$${cart.subtotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, color: Colors.green)),
+                      Text(AppLocalizations.of(context)!.subtotal, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Text(
+                        Format.price(context, cart.subtotal),
+                        style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.primary),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -177,7 +181,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.check_circle_outline),
-                      label: _placing ? const Text('Placing...') : const Text('Place Order'),
+                      label: _placing
+                          ? Text(AppLocalizations.of(context)!.placing)
+                          : Text(AppLocalizations.of(context)!.placeOrder),
                       onPressed: _placing
                           ? null
                           : () async {
@@ -186,7 +192,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               // Validate payment method requirements
                               if (_paymentMethod == 'BANK_TRANSFER' && _paymentProof == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Please upload the payment screenshot.')),
+                                  SnackBar(content: Text(AppLocalizations.of(context)!.uploadProofRequired)),
                                 );
                                 return;
                               }
@@ -220,14 +226,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 }
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Order placed successfully')),
+                                  SnackBar(content: Text(AppLocalizations.of(context)!.orderPlaced)),
                                 );
                                 cart.clear();
                                 Navigator.pop(context);
                               } catch (e) {
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed to place order: $e')),
+                                  SnackBar(content: Text(AppLocalizations.of(context)!.orderFailed('$e'))),
                                 );
                               } finally {
                                 if (mounted) setState(() => _placing = false);

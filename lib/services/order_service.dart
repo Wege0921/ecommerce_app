@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import 'auth_service.dart';
+import '../utils/locale_headers.dart';
 
 class OrderService {
   final String baseUrl = ApiConfig.baseUrl; // http://host:8000/api/
@@ -12,11 +13,13 @@ class OrderService {
     if (token == null) throw Exception('Not authenticated');
 
     final uri = Uri.parse(baseUrl + 'orders/');
+    final lang = await LocaleHeaders.acceptLanguageHeader();
     final res = await http.get(
       uri,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
+        ...lang,
       },
     );
     if (res.statusCode == 200) {
@@ -40,11 +43,13 @@ class OrderService {
     if (token == null) throw Exception('Not authenticated');
 
     final uri = Uri.parse(baseUrl + 'orders/');
+    final lang = await LocaleHeaders.acceptLanguageHeader();
     final res = await http.post(
       uri,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
+        ...lang,
       },
       body: jsonEncode({
         'status': status,
@@ -72,7 +77,9 @@ class OrderService {
 
     final uri = Uri.parse(baseUrl + 'orders/$orderId/upload_proof/');
     final req = http.MultipartRequest('POST', uri);
+    final lang = await LocaleHeaders.acceptLanguageHeader();
     req.headers['Authorization'] = 'Bearer $token';
+    req.headers.addAll(lang);
     req.files.add(await http.MultipartFile.fromPath('file', filePath));
     final streamed = await req.send();
     final res = await http.Response.fromStream(streamed);

@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import 'package:ecommerce_app/l10n/generated/app_localizations.dart';
 import 'package:flutter/services.dart';
+import 'package:ecommerce_app/l10n/generated/app_localizations.dart';
 import '../widgets/pin_entry_screen.dart';
-import 'dart:convert';
+import 'package:local_auth/local_auth.dart';
+import '../services/auth_service.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class ForgotPinScreen extends StatefulWidget {
+  const ForgotPinScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<ForgotPinScreen> createState() => _ForgotPinScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _ForgotPinScreenState extends State<ForgotPinScreen> {
   final TextEditingController phoneController = TextEditingController();
   bool isLoading = false;
+  final LocalAuthentication _localAuth = LocalAuthentication();
   final _auth = AuthService();
 
-  Future<void> _nextToPin() async {
+  Future<void> _continue() async {
+    final t = AppLocalizations.of(context)!;
     String phone = phoneController.text.trim();
     if (phone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.fillAllFields)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.fillAllFields)));
       return;
     }
     phone = phone.replaceAll(' ', '');
@@ -33,67 +33,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
     final restReg = RegExp(r'^(9|7)\d{8}$');
     if (!restReg.hasMatch(phone)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.invalidPhone)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.invalidPhone)));
       return;
     }
-    final normalized = "+251$phone";
 
-    // Ask for PIN with confirmation
+    // Biometric authenticate before allowing reset
+    try {
+      final supported = await _localAuth.isDeviceSupported();
+      if (!supported) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.biometricNotSupported)));
+        return;
+      }
+      final ok = await _localAuth.authenticate(
+        localizedReason: t.authenticateToLogin,
+        options: const AuthenticationOptions(biometricOnly: true),
+      );
+      if (!ok) return;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.biometricError('$e'))));
+      return;
+    }
+
+    // Ask for new PIN (confirm)
     final pin = await Navigator.push<String>(
       context,
       MaterialPageRoute(builder: (_) => const PinEntryScreen(requireConfirm: true)),
     );
     if (pin == null || pin.length != 6) return;
-
     setState(() => isLoading = true);
-    try {
-      final res = await _auth.registerRaw({
-        "username": normalized,
-        "phone": normalized,
-        "password": pin,
-        "password2": pin,
-      });
-      setState(() => isLoading = false);
-      if (res.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.registrationSuccess)),
-        );
-        if (mounted) Navigator.pop(context);
-      } else if (res.statusCode == 400) {
-        String message = AppLocalizations.of(context)!.registrationFailed;
-        try {
-          final body = jsonDecode(res.body);
-          // Common DRF errors for duplicate username/phone
-          if (body is Map) {
-            if (body['username'] is List && (body['username'] as List).isNotEmpty) {
-              message = AppLocalizations.of(context)!.phoneAlreadyRegistered;
-            } else if (body['phone'] is List && (body['phone'] as List).isNotEmpty) {
-              message = AppLocalizations.of(context)!.phoneAlreadyRegistered;
-            } else if (body['detail'] is String) {
-              message = body['detail'];
-            }
-          }
-        } catch (_) {}
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.registrationFailed)),
-        );
-      }
-    } catch (e) {
-      setState(() => isLoading = false);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    final normalized = "+251$phone";
+    final ok = await _auth.resetPin(phone: normalized, newPin: pin);
+    setState(() => isLoading = false);
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.forgotPinSuccess)));
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.forgotPinFailed)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.registerTitle)),
+      appBar: AppBar(title: Text(t.forgotPinTitle)),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -103,11 +87,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      AppLocalizations.of(context)!.createAccount,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text(
+                        t.forgotPinSubtitle,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.black54),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -133,8 +121,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               controller: phoneController,
                               keyboardType: TextInputType.number,
                               decoration: InputDecoration(
-                                labelText: AppLocalizations.of(context)!.phoneNumber,
-                                hintText: AppLocalizations.of(context)!.phoneHint,
+                                labelText: t.phoneNumber,
                                 border: const OutlineInputBorder(),
                                 isDense: true,
                                 counterText: '',
@@ -149,14 +136,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 20),
                     isLoading
-                        ? const CircularProgressIndicator()
+                        ? const Center(child: CircularProgressIndicator())
                         : ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            onPressed: _nextToPin,
-                            child: Text(AppLocalizations.of(context)!.nextLabel),
+                            onPressed: _continue,
+                            child: Text(t.continueLabel),
                           ),
                   ],
                 ),
