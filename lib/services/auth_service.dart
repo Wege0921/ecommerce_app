@@ -2,10 +2,16 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/api_config.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import '../config/api_config.dart';
 
 class AuthService {
   final String baseUrl = ApiConfig.baseUrl + ApiConfig.auth;
   final storage = const FlutterSecureStorage();
+  final GoogleSignIn _google = GoogleSignIn(
+    scopes: ['email'],
+    serverClientId: ApiConfig.googleWebClientId, // Required to get idToken
+  );
 
   /// 🔑 Save tokens locally
   Future<void> _saveTokens(String access, String refresh) async {
@@ -112,6 +118,33 @@ class AuthService {
     await storage.delete(key: 'access_token');
     await storage.delete(key: 'refresh_token');
     await clearSavedCredentials();
+  }
+
+  /// 🔐 Google Sign-In → exchange idToken with backend → save JWTs
+  Future<bool> loginWithGoogle() async {
+    try {
+      // Trigger the authentication flow
+      final account = await _google.signIn();
+      if (account == null) return false; // user cancelled
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null || idToken.isEmpty) return false;
+
+      final url = Uri.parse("${baseUrl}google/");
+      final res = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"id_token": idToken}),
+      );
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        await _saveTokens(body["access"], body["refresh"]);
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// 🔁 Reset PIN (server endpoint should verify identity via biometric/OTP server-side)

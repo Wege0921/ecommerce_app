@@ -295,7 +295,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                               onPressed: () {
                                 _searchCtrl.clear();
-                                _onSearchChanged('');
+                                _searchQuery = '';
+                                _applySearch();
                               },
                             )
                           : null,
@@ -303,11 +304,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                     ),
-                    onChanged: _onSearchChanged,
                     textInputAction: TextInputAction.search,
-                    onSubmitted: (v) => _applySearch(),
+                    onSubmitted: (v) => _applySearchFromController(),
                   ),
                 ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: 'Search',
+                icon: const Icon(Icons.search),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                onPressed: _applySearchFromController,
               ),
               const SizedBox(width: 8),
               IconButton(
@@ -428,6 +436,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _applySearch() async {
     setState(() => isLoading = true);
     await _load();
+  }
+
+  void _applySearchFromController() {
+    _searchQuery = _searchCtrl.text.trim();
+    _applySearch();
   }
 
   Future<void> _openFilters() async {
