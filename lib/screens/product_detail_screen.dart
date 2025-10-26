@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../state/cart_state.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
+import 'image_viewer_screen.dart';
 import 'checkout_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -19,10 +20,13 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int quantity = 1;
+  int _imageIndex = 0;
+  final PageController _pageCtrl = PageController();
 
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic> product = widget.product;
+    final List<dynamic> imgs = (product['images'] as List?) ?? const [];
     final imageUrl = (product['image_url'] ?? '') as String;
     final stock = product['stock'] is int ? product['stock'] as int : null;
     return Scaffold(
@@ -36,12 +40,68 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: Container(
                 color: Colors.grey.shade100,
                 width: double.infinity,
-                child: imageUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: imageUrl,
-                        fit: BoxFit.cover,
+                child: (imgs.isNotEmpty)
+                    ? Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              final urls = imgs.map((e) => e?.toString() ?? '').where((e) => e.isNotEmpty).toList();
+                              if (urls.isEmpty) return;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ImageViewerScreen(images: urls, initialIndex: _imageIndex),
+                                ),
+                              );
+                            },
+                            child: PageView.builder(
+                              controller: _pageCtrl,
+                              itemCount: imgs.length,
+                              onPageChanged: (i) => setState(() => _imageIndex = i),
+                              itemBuilder: (context, index) {
+                                final url = imgs[index]?.toString() ?? '';
+                                return CachedNetworkImage(imageUrl: url, fit: BoxFit.cover);
+                              },
+                            ),
+                          ),
+                          if (imgs.length > 1)
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: 8,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(imgs.length, (i) {
+                                  final active = i == _imageIndex;
+                                  return AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                                    width: active ? 10 : 6,
+                                    height: active ? 10 : 6,
+                                    decoration: BoxDecoration(
+                                      color: active ? Colors.white : Colors.white70,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  );
+                                }),
+                              ),
+                            ),
+                        ],
                       )
-                    : const Icon(Icons.image_outlined, size: 64, color: Colors.grey),
+                    : imageUrl.isNotEmpty
+                        ? GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ImageViewerScreen(images: [imageUrl], initialIndex: 0),
+                                ),
+                              );
+                            },
+                            child: CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover),
+                          )
+                        : const Icon(Icons.image_outlined, size: 64, color: Colors.grey),
               ),
             ),
             Padding(
