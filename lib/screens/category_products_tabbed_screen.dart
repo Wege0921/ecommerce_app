@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../services/category_service.dart';
 import '../services/product_service.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../utils/format.dart';
+import '../state/cart_state.dart';
+import 'product_detail_screen.dart';
 
 class CategoryProductsTabbedScreen extends StatefulWidget {
   final int parentCategoryId;
@@ -189,7 +192,14 @@ class _CategoryProductsListState extends State<_CategoryProductsList> {
                   elevation: 2,
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
-                    onTap: () {/* Implement product detail navigation if needed */},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ProductDetailScreen(product: p as Map<String, dynamic>),
+                        ),
+                      );
+                    },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -222,6 +232,27 @@ class _CategoryProductsListState extends State<_CategoryProductsList> {
                               Text(
                                 Format.price(context, priceNum, currency: 'ETB'),
                                 style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'In stock: ${p['stock'] ?? ''}',
+                                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.add_shopping_cart),
+                                    tooltip: 'Add to cart',
+                                    onPressed: () {
+                                      final stock = p['stock'] is int ? p['stock'] as int : null;
+                                      context.read<CartState>().add(p as Map<String, dynamic>, quantity: 1, stock: stock);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Added to cart')),
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
                             ],
                           ),
