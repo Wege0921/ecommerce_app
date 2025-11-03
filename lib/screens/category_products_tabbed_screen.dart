@@ -98,6 +98,16 @@ class _CategoryProductsListState extends State<_CategoryProductsList> {
   bool hasMore = true;
   int _page = 1;
 
+  String _productThumbUrl(Map<String, dynamic> p) {
+    final images = p['images'];
+    if (images is List && images.isNotEmpty) {
+      final first = images.first;
+      if (first is Map && first['thumb'] is String) return first['thumb'] as String;
+      if (first is String) return first;
+    }
+    return (p['image_url'] ?? '') as String;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -178,7 +188,7 @@ class _CategoryProductsListState extends State<_CategoryProductsList> {
               itemCount: products.length,
               itemBuilder: (context, index) {
                 final p = products[index] as Map<String, dynamic>;
-                final imageUrl = (p['image_url'] ?? '') as String;
+                final imageUrl = _productThumbUrl(p);
                 final dynamic priceRaw = p['price'];
                 num priceNum;
                 if (priceRaw is num) {
@@ -208,12 +218,16 @@ class _CategoryProductsListState extends State<_CategoryProductsList> {
                             color: Colors.grey.shade100,
                             width: double.infinity,
                             child: imageUrl.isNotEmpty
-                                ? CachedNetworkImage(
-                                    imageUrl: imageUrl,
-                                    fit: BoxFit.cover,
-                                    placeholder: (c, _) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                                    errorWidget: (c, _, __) => const Icon(Icons.image_not_supported_outlined, size: 48, color: Colors.grey),
-                                  )
+                                ? Builder(builder: (context) {
+                                    final dpr = MediaQuery.of(context).devicePixelRatio;
+                                    return CachedNetworkImage(
+                                      imageUrl: imageUrl,
+                                      fit: BoxFit.cover,
+                                      memCacheWidth: (300 * dpr).round(),
+                                      placeholder: (c, _) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                      errorWidget: (c, _, __) => const Icon(Icons.image_not_supported_outlined, size: 48, color: Colors.grey),
+                                    );
+                                  })
                                 : const Icon(Icons.image_outlined, size: 48, color: Colors.grey),
                           ),
                         ),

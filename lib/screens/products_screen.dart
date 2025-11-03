@@ -25,6 +25,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
   Set<String> _types = {};
   String? _activeType;
 
+  String _productThumbUrl(Map<String, dynamic> p) {
+    final images = p['images'];
+    if (images is List && images.isNotEmpty) {
+      final first = images.first;
+      if (first is Map && first['thumb'] is String) return first['thumb'] as String;
+      if (first is String) return first;
+    }
+    return (p['image_url'] ?? '') as String;
+  }
+
   String? _typeOf(Map<String, dynamic> p) {
     final dynamic t1 = p['type'];
     if (t1 is String && t1.trim().isNotEmpty) return t1.trim();
@@ -178,7 +188,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       itemCount: products.length,
                       itemBuilder: (context, index) {
                         final p = products[index] as Map<String, dynamic>;
-                        final imageUrl = (p['image_url'] ?? '') as String;
+                        final imageUrl = _productThumbUrl(p);
                         // Coerce price to numeric even if backend returns it as String
                         final dynamic priceRaw = p['price'];
                         num priceNum;
@@ -205,12 +215,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                     color: Colors.grey.shade100,
                                     width: double.infinity,
                                     child: imageUrl.isNotEmpty
-                                        ? CachedNetworkImage(
-                                            imageUrl: imageUrl,
-                                            fit: BoxFit.cover,
-                                            placeholder: (c, _) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                                            errorWidget: (c, _, __) => const Icon(Icons.image_not_supported_outlined, size: 48, color: Colors.grey),
-                                          )
+                                        ? Builder(builder: (context) {
+                                            final dpr = MediaQuery.of(context).devicePixelRatio;
+                                            return CachedNetworkImage(
+                                              imageUrl: imageUrl,
+                                              fit: BoxFit.cover,
+                                              memCacheWidth: (300 * dpr).round(),
+                                              placeholder: (c, _) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                              errorWidget: (c, _, __) => const Icon(Icons.image_not_supported_outlined, size: 48, color: Colors.grey),
+                                            );
+                                          })
                                         : const Icon(Icons.image_outlined, size: 48, color: Colors.grey),
                                   ),
                                 ),

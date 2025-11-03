@@ -23,6 +23,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _imageIndex = 0;
   final PageController _pageCtrl = PageController();
 
+  String _thumbOf(dynamic e) {
+    if (e is Map && e['thumb'] is String) return e['thumb'] as String;
+    if (e is String) return e;
+    return '';
+  }
+
+  String _fullOf(dynamic e) {
+    if (e is Map && e['full'] is String) return e['full'] as String;
+    if (e is String) return e;
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic> product = widget.product;
@@ -46,7 +58,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         children: [
                           GestureDetector(
                             onTap: () {
-                              final urls = imgs.map((e) => e?.toString() ?? '').where((e) => e.isNotEmpty).toList();
+                              final urls = imgs.map((e) => _fullOf(e)).where((e) => e.isNotEmpty).toList();
                               if (urls.isEmpty) return;
                               Navigator.push(
                                 context,
@@ -60,8 +72,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               itemCount: imgs.length,
                               onPageChanged: (i) => setState(() => _imageIndex = i),
                               itemBuilder: (context, index) {
-                                final url = imgs[index]?.toString() ?? '';
-                                return CachedNetworkImage(imageUrl: url, fit: BoxFit.cover);
+                                final url = _fullOf(imgs[index]);
+                                final dpr = MediaQuery.of(context).devicePixelRatio;
+                                return CachedNetworkImage(
+                                  imageUrl: url,
+                                  fit: BoxFit.cover,
+                                  memCacheWidth: (1200 * dpr).round(),
+                                );
                               },
                             ),
                           ),
@@ -99,7 +116,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 ),
                               );
                             },
-                            child: CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover),
+                            child: Builder(builder: (context) {
+                              final dpr = MediaQuery.of(context).devicePixelRatio;
+                              return CachedNetworkImage(
+                                imageUrl: imageUrl,
+                                fit: BoxFit.cover,
+                                memCacheWidth: (1200 * dpr).round(),
+                              );
+                            }),
                           )
                         : const Icon(Icons.image_outlined, size: 64, color: Colors.grey),
               ),
