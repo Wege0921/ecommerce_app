@@ -79,6 +79,9 @@ class _CategoryProductsTabbedScreenState extends State<CategoryProductsTabbedScr
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class _CategoryProductsList extends StatefulWidget {
@@ -90,7 +93,7 @@ class _CategoryProductsList extends StatefulWidget {
   State<_CategoryProductsList> createState() => _CategoryProductsListState();
 }
 
-class _CategoryProductsListState extends State<_CategoryProductsList> {
+class _CategoryProductsListState extends State<_CategoryProductsList> with AutomaticKeepAliveClientMixin<_CategoryProductsList> {
   final _service = ProductService();
   List products = [];
   bool isLoading = true;
@@ -155,6 +158,7 @@ class _CategoryProductsListState extends State<_CategoryProductsList> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -177,6 +181,7 @@ class _CategoryProductsListState extends State<_CategoryProductsList> {
           return false;
         },
         child: ListView(
+          cacheExtent: 800,
           children: [
             GridView.builder(
               padding: const EdgeInsets.all(12),
@@ -227,6 +232,7 @@ class _CategoryProductsListState extends State<_CategoryProductsList> {
                                       imageUrl: imageUrl,
                                       fit: BoxFit.cover,
                                       memCacheWidth: (240 * dpr).round(),
+                                      fadeInDuration: const Duration(milliseconds: 120),
                                       placeholder: (c, _) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                                       errorWidget: (c, _, __) => const Icon(Icons.image_not_supported_outlined, size: 48, color: Colors.grey),
                                     );
