@@ -35,6 +35,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return '';
   }
 
+  String _heroOf(dynamic e) {
+    if (e is Map && e['hero'] is String) return e['hero'] as String;
+    return _fullOf(e);
+  }
+
+  String _origOf(dynamic e) {
+    if (e is Map && e['orig'] is String) return e['orig'] as String;
+    return _heroOf(e);
+  }
+
+  String _cldFillBest(String url, {required int w, required int h}) {
+    // If this is a Cloudinary URL, inject a high-quality fill transform sized to container
+    const marker = '/upload/';
+    final idx = url.indexOf(marker);
+    if (idx == -1) return url;
+    final transform = 'f_auto,q_auto:best,c_fill,g_auto,w_${w},h_${h}';
+    return url.substring(0, idx + marker.length) + '$transform/' + url.substring(idx + marker.length);
+  }
+
   @override
   Widget build(BuildContext context) {
     final Map<String, dynamic> product = widget.product;
@@ -72,12 +91,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               itemCount: imgs.length,
                               onPageChanged: (i) => setState(() => _imageIndex = i),
                               itemBuilder: (context, index) {
-                                final url = _fullOf(imgs[index]);
+                                final url = _heroOf(imgs[index]);
                                 final dpr = MediaQuery.of(context).devicePixelRatio;
                                 return CachedNetworkImage(
                                   imageUrl: url,
                                   fit: BoxFit.cover,
-                                  memCacheWidth: (1200 * dpr).round(),
+                                  memCacheWidth: (1600 * dpr).round(),
+                                  filterQuality: FilterQuality.high,
+                                  fadeInDuration: const Duration(milliseconds: 120),
                                 );
                               },
                             ),
@@ -121,7 +142,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               return CachedNetworkImage(
                                 imageUrl: imageUrl,
                                 fit: BoxFit.cover,
-                                memCacheWidth: (1200 * dpr).round(),
+                                memCacheWidth: (1600 * dpr).round(),
+                                filterQuality: FilterQuality.high,
+                                fadeInDuration: const Duration(milliseconds: 120),
                               );
                             }),
                           )

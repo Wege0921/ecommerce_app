@@ -29,7 +29,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
     final images = p['images'];
     if (images is List && images.isNotEmpty) {
       final first = images.first;
-      if (first is Map && first['thumb'] is String) return first['thumb'] as String;
+      if (first is Map) {
+        if (first['tiny'] is String) return first['tiny'] as String;
+        if (first['thumb'] is String) return first['thumb'] as String;
+      }
       if (first is String) return first;
     }
     return (p['image_url'] ?? '') as String;
@@ -220,7 +223,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                             return CachedNetworkImage(
                                               imageUrl: imageUrl,
                                               fit: BoxFit.cover,
-                                              memCacheWidth: (300 * dpr).round(),
+                                              memCacheWidth: (240 * dpr).round(),
                                               placeholder: (c, _) => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                                               errorWidget: (c, _, __) => const Icon(Icons.image_not_supported_outlined, size: 48, color: Colors.grey),
                                             );

@@ -80,8 +80,6 @@ class _CategoryProductsTabbedScreenState extends State<CategoryProductsTabbedScr
     );
   }
 
-  @override
-  bool get wantKeepAlive => true;
 }
 
 class _CategoryProductsList extends StatefulWidget {
@@ -296,4 +294,7 @@ class _CategoryProductsListState extends State<_CategoryProductsList> with Autom
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

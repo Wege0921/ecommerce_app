@@ -49,6 +49,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return (p['image_url'] ?? '') as String;
   }
 
+  String _cldFillBest(String url, {required int w, required int h}) {
+    const marker = '/upload/';
+    final idx = url.indexOf(marker);
+    if (idx == -1) return url;
+    final transform = 'f_auto,q_auto:best,c_fill,g_auto,w_${w},h_${h}';
+    return url.substring(0, idx + marker.length) + '$transform/' + url.substring(idx + marker.length);
+  }
+
   String _productFullUrl(Map<String, dynamic> p) {
     final images = p['images'];
     if (images is List && images.isNotEmpty) {
@@ -59,11 +67,25 @@ class _HomeScreenState extends State<HomeScreen> {
     return (p['image_url'] ?? '') as String;
   }
 
+  String _productFeaturedUrl(Map<String, dynamic> p) {
+    final images = p['images'];
+    if (images is List && images.isNotEmpty) {
+      final first = images.first;
+      if (first is Map) {
+        if (first['hero'] is String) return first['hero'] as String;
+        if (first['full'] is String) return first['full'] as String;
+        if (first['medium'] is String) return first['medium'] as String;
+      }
+      if (first is String) return first;
+    }
+    return (p['image_url'] ?? '') as String;
+  }
+
   @override
   void initState() {
     super.initState();
     _load();
-    _startAutoSlide();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startAutoSlide());
     _fetchLocation();
   }
 
@@ -125,6 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _autoTimer?.cancel();
     _autoTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (!mounted || products.isEmpty) return;
+      if (!_pageController.hasClients) return;
       final next = (_currentPage + 1) % _featuredCount;
       _pageController.animateToPage(
         next,
@@ -223,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: featured.length,
             itemBuilder: (context, index) {
               final p = featured[index] as Map<String, dynamic>;
-              final imageUrl = _productThumbUrl(p);
+              final baseUrl = _productFeaturedUrl(p);
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                 child: InkWell(
@@ -236,13 +259,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        imageUrl.isNotEmpty
+                        baseUrl.isNotEmpty
                             ? Builder(builder: (context) {
                                 final dpr = MediaQuery.of(context).devicePixelRatio;
+                                final width = MediaQuery.of(context).size.width * 0.9; // viewportFraction
+                                const height = 190.0;
+                                final w = (width * dpr).round();
+                                final h = (height * dpr).round();
+                                final url = _cldFillBest(baseUrl, w: w, h: h);
                                 return CachedNetworkImage(
-                                  imageUrl: imageUrl,
+                                  imageUrl: url,
                                   fit: BoxFit.cover,
-                                  memCacheWidth: (240 * dpr).round(),
+                                  filterQuality: FilterQuality.high,
                                 );
                               })
                             : Container(color: Colors.grey.shade200),
