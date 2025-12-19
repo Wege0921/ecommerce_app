@@ -159,27 +159,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: Text(AppLocalizations.of(context)!.nextLabel),
                           ),
                     const SizedBox(height: 20),
-                    Row(children: const [Expanded(child: Divider()), SizedBox(width: 8), Text('or'), SizedBox(width: 8), Expanded(child: Divider())]),
-                    const SizedBox(height: 12),
-                    isLoading
-                        ? const SizedBox.shrink()
-                        : OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-                            onPressed: () async {
-                              setState(() => isLoading = true);
-                              final ok = await _auth.loginWithGoogle();
-                              setState(() => isLoading = false);
-                              if (!mounted) return;
-                              if (ok) {
-                                Navigator.pop(context, true);
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.registrationSuccess)));
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Google sign-in failed')));
-                              }
-                            },
-                            icon: const Icon(Icons.login),
-                            label: const Text('Continue with Google'),
-                          ),
+                    // Google Sign-In functionality removed for open testing
                   ],
                 ),
               ),

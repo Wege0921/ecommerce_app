@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import '../services/auth_service.dart';
 import 'package:provider/provider.dart';
 import '../state/cart_state.dart';
@@ -61,8 +62,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  Widget _buildShimmerLoading() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // User info card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  // Avatar
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Username
+                  Container(
+                    width: 200,
+                    height: 24,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 8),
+                  // Email
+                  Container(
+                    width: 250,
+                    height: 20,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Menu items
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Profile')),
+        body: _buildShimmerLoading(),
+      );
+    }
+
     if (!isLoggedIn) {
       return Padding(
         padding: const EdgeInsets.all(16.0),
@@ -112,7 +172,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Scaffold(
+        appBar: AppBar(title: const Text('Profile')),
+        body: _buildShimmerLoading(),
+      );
     }
 
     return Padding(

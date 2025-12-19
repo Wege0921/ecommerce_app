@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import '../services/category_service.dart';
 import '../services/product_service.dart';
 import '../utils/format.dart';
@@ -45,10 +46,53 @@ class _CategoryProductsTabbedScreenState extends State<CategoryProductsTabbedScr
     }
   }
 
+  Widget _buildShimmerLoading() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView(
+        children: List.generate(6, (index) => Container(
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: 16,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 100,
+                      height: 14,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        )),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: AppBar(title: Text(widget.parentCategoryName)),
+        body: _buildShimmerLoading(),
+      );
     }
 
     final tabs = <Tab>[
@@ -154,11 +198,66 @@ class _CategoryProductsListState extends State<_CategoryProductsList> with Autom
     }
   }
 
+  Widget _buildProductShimmer() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.70,
+      ),
+      itemCount: 6, // Number of shimmer items
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image placeholder
+                Container(
+                  width: double.infinity,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Title placeholder
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  width: 120,
+                  height: 16,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 4),
+                // Price placeholder
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  width: 60,
+                  height: 14,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return _buildProductShimmer();
     }
 
     return RefreshIndicator(
@@ -181,17 +280,19 @@ class _CategoryProductsListState extends State<_CategoryProductsList> with Autom
         child: ListView(
           cacheExtent: 800,
           children: [
-            GridView.builder(
-              padding: const EdgeInsets.all(12),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 0.70,
-              ),
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: products.length,
+            isLoadingMore
+                ? _buildProductShimmer()
+                : GridView.builder(
+                    padding: const EdgeInsets.all(12),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.70,
+                    ),
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: products.length,
               itemBuilder: (context, index) {
                 final p = products[index] as Map<String, dynamic>;
                 final imageUrl = _productThumbUrl(p);

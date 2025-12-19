@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import '../services/product_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'product_detail_screen.dart';
@@ -21,6 +22,177 @@ class _HomeScreenState extends State<HomeScreen> {
   List products = [];
   bool isLoadingMore = false;
   bool hasMore = true;
+
+  // Shimmer loading widget for home screen
+  Widget _buildShimmerLoading() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Location shimmer
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 200,
+                    height: 20,
+                    color: Colors.white,
+                  ),
+                ],
+              ),
+            ),
+            
+            // Featured products shimmer
+            Container(
+              height: 190,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 3,
+                itemBuilder: (_, __) => Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+            
+            // Page indicator shimmer
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(3, (index) => 
+                  Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  )
+                ),
+              ),
+            ),
+            
+            // Categories shimmer
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text('Categories', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 5,
+                itemBuilder: (_, __) => Container(
+                  width: 80,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 60,
+                        height: 10,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            
+            // Products grid shimmer
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text('Featured Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(8),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.7,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemCount: 6, // Number of shimmer items
+              itemBuilder: (_, __) => Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Image placeholder
+                    Container(
+                      width: double.infinity,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                      ),
+                    ),
+                    // Text placeholders
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            height: 12,
+                            color: Colors.white,
+                            margin: const EdgeInsets.only(bottom: 4),
+                          ),
+                          Container(
+                            width: 100,
+                            height: 10,
+                            color: Colors.white,
+                            margin: const EdgeInsets.only(bottom: 4),
+                          ),
+                          Container(
+                            width: 80,
+                            height: 14,
+                            color: Colors.white,
+                            margin: const EdgeInsets.only(top: 8),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
   int _page = 1;
   final _pageController = PageController(viewportFraction: 0.9);
   int _currentPage = 0;
@@ -84,9 +256,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startAutoSlide());
-    _fetchLocation();
+    // Set initial loading state
+    setState(() => isLoading = true);
+    // Load data after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _load();
+      _startAutoSlide();
+      _fetchLocation();
+    });
   }
 
   @override
@@ -102,6 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _load() async {
+    setState(() => isLoading = true);
     try {
       Map<String, dynamic> firstPage;
       List featured = [];
@@ -180,8 +358,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
+    if (isLoading && products.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Home')),
+        body: _buildShimmerLoading(),
+      );
     }
 
     if (products.isEmpty) {
@@ -210,10 +391,12 @@ class _HomeScreenState extends State<HomeScreen> {
           }
           return false;
         },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            children: [
+        child: isLoading
+            ? _buildShimmerLoading()
+            : SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
         // Location banner
         if (_location != null)
           Padding(

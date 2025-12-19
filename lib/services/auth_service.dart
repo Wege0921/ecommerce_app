@@ -8,18 +8,18 @@ import '../config/api_config.dart';
 class AuthService {
   final String baseUrl = ApiConfig.baseUrl + ApiConfig.auth;
   final storage = const FlutterSecureStorage();
-  final GoogleSignIn _google = GoogleSignIn(
-    scopes: ['email'],
-    serverClientId: ApiConfig.googleWebClientId, // Required to get idToken
-  );
+  // final GoogleSignIn _google = GoogleSignIn(
+  //   scopes: ['email'],
+  //   serverClientId: ApiConfig.googleWebClientId, // Required to get idToken
+  // );
 
-  /// 🔑 Save tokens locally
+  /// Save tokens locally
   Future<void> _saveTokens(String access, String refresh) async {
     await storage.write(key: 'access_token', value: access);
     await storage.write(key: 'refresh_token', value: refresh);
   }
 
-  /// 📱 Optionally save credentials for biometric login (secure storage)
+  /// Optionally save credentials for biometric login (secure storage)
   Future<void> saveCredentials(String username, String password) async {
     await storage.write(key: 'saved_username', value: username);
     await storage.write(key: 'saved_password', value: password);
@@ -39,23 +39,23 @@ class AuthService {
     await storage.delete(key: 'saved_password');
   }
 
-  /// 🧾 Get access token
+  /// Get access token
   Future<String?> getAccessToken() async {
     return storage.read(key: 'access_token');
   }
 
-  /// 🧾 Get refresh token
+  /// Get refresh token
   Future<String?> getRefreshToken() async {
     return storage.read(key: 'refresh_token');
   }
 
-  /// ✅ Check if user is logged in
+  /// Check if user is logged in
   Future<bool> isLoggedIn() async {
     final token = await getAccessToken();
     return token != null && token.isNotEmpty;
   }
 
-  /// 🧍 Register a new user
+  /// Register a new user
   Future<http.Response> registerRaw(Map<String, dynamic> data) async {
     final url = Uri.parse("${baseUrl}register/");
     final res = await http.post(
@@ -72,7 +72,7 @@ class AuthService {
     return res.statusCode == 201;
   }
 
-  /// 🔐 Login user and store tokens
+  /// Login user and store tokens
   Future<bool> login(String username, String password, {bool rememberForBiometric = false}) async {
     final url = Uri.parse("${baseUrl}token/");
     final res = await http.post(
@@ -96,7 +96,7 @@ class AuthService {
     return false;
   }
 
-  /// 👤 Get current user profile
+  /// Get current user profile
   Future<Map<String, dynamic>?> getUser() async {
     final token = await getAccessToken();
     if (token == null) return null;
@@ -113,41 +113,41 @@ class AuthService {
     return null;
   }
 
-  /// 🚪 Logout user
+  /// Logout user
   Future<void> logout() async {
     await storage.delete(key: 'access_token');
     await storage.delete(key: 'refresh_token');
     await clearSavedCredentials();
   }
 
-  /// 🔐 Google Sign-In → exchange idToken with backend → save JWTs
-  Future<bool> loginWithGoogle() async {
-    try {
-      // Trigger the authentication flow
-      final account = await _google.signIn();
-      if (account == null) return false; // user cancelled
-      final auth = await account.authentication;
-      final idToken = auth.idToken;
-      if (idToken == null || idToken.isEmpty) return false;
+  /// Google Sign-In → exchange idToken with backend → save JWTs
+  // Future<bool> loginWithGoogle() async {
+  //   try {
+  //     // Trigger the authentication flow
+  //     final account = await _google.signIn();
+  //     if (account == null) return false; // user cancelled
+  //     final auth = await account.authentication;
+  //     final idToken = auth.idToken;
+  //     if (idToken == null || idToken.isEmpty) return false;
 
-      final url = Uri.parse("${baseUrl}google/");
-      final res = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"id_token": idToken}),
-      );
-      if (res.statusCode == 200) {
-        final body = jsonDecode(res.body);
-        await _saveTokens(body["access"], body["refresh"]);
-        return true;
-      }
-      return false;
-    } catch (_) {
-      return false;
-    }
-  }
+  //     final url = Uri.parse("${baseUrl}google/");
+  //     final res = await http.post(
+  //       url,
+  //       headers: {"Content-Type": "application/json"},
+  //       body: jsonEncode({"id_token": idToken}),
+  //     );
+  //     if (res.statusCode == 200) {
+  //       final body = jsonDecode(res.body);
+  //       await _saveTokens(body["access"], body["refresh"]);
+  //       return true;
+  //     }
+  //     return false;
+  //   } catch (_) {
+  //     return false;
+  //   }
+  // }
 
-  /// 🔁 Reset PIN (server endpoint should verify identity via biometric/OTP server-side)
+  /// Reset PIN (server endpoint should verify identity via biometric/OTP server-side)
   Future<bool> resetPin({required String phone, required String newPin}) async {
     final url = Uri.parse("${baseUrl}reset-pin/");
     final res = await http.post(
