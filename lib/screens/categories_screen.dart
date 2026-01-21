@@ -89,69 +89,61 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: Text(AppLocalizations.of(context)!.categories)),
-        body: _buildShimmerLoading(),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context)!.categories)),
-      body: categories.isEmpty
-          ? const Center(child: Text('No categories found'))
-          : ListView.builder(
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final category = categories[index];
-                final rawName = (category['name'] ?? '').toString();
-                String name = rawName;
-                // Localize known categories
-                final t = AppLocalizations.of(context)!;
-                final n = rawName.toLowerCase();
-                if (n.contains('eyewear') || n.contains('eye') || n.contains('glass')) {
-                  name = t.categoryEyeGlasses;
-                } else if (n.contains('cosmetic') || n.contains('beauty') || n.contains('makeup')) {
-                  name = t.categoryCosmetics;
-                } else if (n.contains('men') || n.contains('male')) {
-                  name = t.categoryMen;
-                } else if (n.contains('female') || n.contains('women') || n.contains('lady')) {
-                  name = t.categoryFemale;
-                } else if (n.contains('kid') || n.contains('child') || n.contains('children')) {
-                  name = t.categoryKids;
-                } else if (n.contains('electronic') || n.contains('electronics') || n.contains('device') || n.contains('gadget')) {
-                  name = t.categoryElectronics;
-                } else if (n.contains('computer') || n.contains('laptop') || n.contains('pc')) {
-                  name = t.categoryComputer;
-                } else if (n.contains('accessor') || n.contains('accessories') || n.contains('watch') || n.contains('bag')) {
-                  name = t.categoryAccessories;
-                }
-                final icon = _categoryIcon(name);
-                final theme = Theme.of(context);
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      radius: 22,
-                      backgroundColor: theme.colorScheme.primary.withOpacity(0.10),
-                      child: Icon(icon, color: theme.colorScheme.primary),
+    return isLoading
+        ? _buildShimmerLoading()
+        : categories.isEmpty
+            ? const Center(child: Text('No categories found'))
+            : ListView.builder(
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+                  final rawName = (category['name'] ?? '').toString();
+                  String name = rawName;
+                  // Localize known categories
+                  final t = AppLocalizations.of(context)!;
+                  final n = rawName.toLowerCase();
+                  if (n.contains('eyewear') || n.contains('eye') || n.contains('glass')) {
+                    name = t.categoryEyeGlasses;
+                  } else if (n.contains('cosmetic') || n.contains('beauty') || n.contains('makeup')) {
+                    name = t.categoryCosmetics;
+                  } else if (n.contains('men') || n.contains('male')) {
+                    name = t.categoryMen;
+                  } else if (n.contains('female') || n.contains('women') || n.contains('lady')) {
+                    name = t.categoryFemale;
+                  } else if (n.contains('kid') || n.contains('child') || n.contains('children')) {
+                    name = t.categoryKids;
+                  } else if (n.contains('electronic') || n.contains('electronics') || n.contains('device') || n.contains('gadget')) {
+                    name = t.categoryElectronics;
+                  } else if (n.contains('computer') || n.contains('laptop') || n.contains('pc')) {
+                    name = t.categoryComputer;
+                  } else if (n.contains('accessor') || n.contains('accessories') || n.contains('watch') || n.contains('bag')) {
+                    name = t.categoryAccessories;
+                  }
+                  final icon = _categoryIcon(name);
+                  final theme = Theme.of(context);
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        radius: 22,
+                        backgroundColor: theme.colorScheme.primary.withOpacity(0.10),
+                        child: Icon(icon, color: theme.colorScheme.primary),
+                      ),
+                      title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        final id = category['id'] as int;
+                        final rawName = (category['name'] ?? '').toString();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CategoryProductsTabbedScreen(parentCategoryId: id, parentCategoryName: rawName),
+                          ),
+                        );
+                      },
                     ),
-                    title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      final id = category['id'] as int;
-                      final rawName = (category['name'] ?? '').toString();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => CategoryProductsTabbedScreen(parentCategoryId: id, parentCategoryName: rawName),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-    );
+                  );
+                },
+              );
   }
 }
